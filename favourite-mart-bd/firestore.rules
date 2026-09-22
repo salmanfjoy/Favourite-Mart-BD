@@ -1,0 +1,105 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny all unknown paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email.lower() == 'salmanfjoyce@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Order validation helper
+    function isValidOrder(data) {
+      return data.trackingCode is string && data.trackingCode.size() <= 32
+        && data.customerName is string && data.customerName.size() > 0 && data.customerName.size() <= 100
+        && data.customerPhone is string && data.customerPhone.size() >= 5 && data.customerPhone.size() <= 20
+        && data.customerAddress is string && data.customerAddress.size() > 0 && data.customerAddress.size() <= 300
+        && data.totalAmount is number && data.totalAmount >= 0
+        && data.status in ['pending', 'paid', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled']
+        && data.paymentMethod in ['cod', 'bkash', 'nagad', 'card']
+        && data.items is list && data.items.size() > 0 && data.items.size() <= 50;
+    }
+
+    // Products Collection
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Orders Collection
+    match /orders/{orderId} {
+      // Allow read for order tracking by customer or admin dashboard
+      allow read: if true;
+
+      allow create: if isValidOrder(incoming())
+        && incoming().status == 'pending';
+
+      allow update: if isAdmin() || (
+        isSignedIn() && existing().userId == request.auth.uid
+      );
+
+      allow delete: if isAdmin();
+    }
+
+    // User Profiles Collection
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      
+      allow create: if isOwner(userId);
+
+      allow update: if isOwner(userId) || isAdmin();
+
+      allow delete: if isAdmin();
+    }
+
+    // Product Reviews Collection
+    match /reviews/{reviewId} {
+      allow read: if true;
+      
+      allow create: if incoming().productId is string
+        && incoming().userName is string
+        && incoming().rating is number
+        && incoming().comment is string;
+
+      allow update, delete: if isAdmin();
+    }
+
+    // Newsletter & Discount Voucher Subscribers
+    match /subscribers/{subscriberId} {
+      allow read: if isAdmin();
+      
+      allow create: if incoming().contact is string && incoming().contact.size() >= 3;
+
+      allow update, delete: if isAdmin();
+    }
+
+    // Admin List
+    match /admins/{adminId} {
+      allow read, write: if isAdmin();
+    }
+  }
+}
+

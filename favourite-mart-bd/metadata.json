@@ -1,0 +1,6 @@
+{
+  "name": "Favourite Mart BD",
+  "description": "Favourite Mart BD — Bangladesh's premier online lifestyle gadgets, tech accessories, bags, smartwatches, and everyday essentials store with Cash on Delivery and nationwide fast delivery.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

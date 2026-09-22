@@ -1,0 +1,118 @@
+{
+  "entities": {
+    "Order": {
+      "title": "Order",
+      "description": "A customer order for products in Favourite Mart BD",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique order ID" },
+        "trackingCode": { "type": "string", "description": "Customer facing tracking code e.g. FM-XXXXXX", "maxLength": 32 },
+        "customerName": { "type": "string", "description": "Full name of the customer", "maxLength": 100 },
+        "customerPhone": { "type": "string", "description": "Mobile phone number of the customer", "maxLength": 20 },
+        "customerAddress": { "type": "string", "description": "Delivery address e.g. Kalabagan, Dhanmondi, Dhaka", "maxLength": 300 },
+        "district": { "type": "string", "description": "Delivery district or area inside/outside Dhaka", "maxLength": 50 },
+        "deliveryCharge": { "type": "number", "description": "Shipping fee in BDT" },
+        "subtotal": { "type": "number", "description": "Subtotal amount before discounts in BDT" },
+        "discount": { "type": "number", "description": "Discount applied in BDT" },
+        "totalAmount": { "type": "number", "description": "Final payable amount in BDT" },
+        "paymentMethod": { "type": "string", "enum": ["cod", "bkash", "nagad", "card"], "description": "Selected payment method" },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"], "description": "Order processing status" },
+        "note": { "type": "string", "description": "Optional order notes or instructions", "maxLength": 500 },
+        "items": { "type": "array", "description": "List of ordered items with product details and quantity" },
+        "userId": { "type": "string", "description": "Optional UID of the user who placed the order if authenticated", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time", "description": "ISO timestamp or server timestamp" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "ISO timestamp or server timestamp" }
+      },
+      "required": ["trackingCode", "customerName", "customerPhone", "customerAddress", "totalAmount", "status", "paymentMethod", "items"]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile document for authenticated customers and staff",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID", "maxLength": 128 },
+        "email": { "type": "string", "description": "User email address", "maxLength": 120 },
+        "displayName": { "type": "string", "description": "Full name of the user", "maxLength": 100 },
+        "photoURL": { "type": "string", "description": "Profile picture URL", "maxLength": 500 },
+        "phone": { "type": "string", "description": "Phone number", "maxLength": 20 },
+        "address": { "type": "string", "description": "Saved shipping address", "maxLength": 300 },
+        "role": { "type": "string", "enum": ["customer", "admin"], "description": "User access role" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Account creation timestamp" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Review": {
+      "title": "Review",
+      "description": "Product review submitted by verified customer",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique review ID" },
+        "productId": { "type": "string", "description": "ID of the reviewed product", "maxLength": 64 },
+        "userName": { "type": "string", "description": "Name of the reviewer", "maxLength": 100 },
+        "userLocation": { "type": "string", "description": "City/District of reviewer e.g. Dhaka, Chittagong", "maxLength": 100 },
+        "rating": { "type": "number", "description": "Star rating 1-5" },
+        "comment": { "type": "string", "description": "Review text comment", "maxLength": 1000 },
+        "verifiedPurchase": { "type": "boolean", "description": "Whether the purchase was verified" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp when review was submitted" }
+      },
+      "required": ["productId", "userName", "rating", "comment"]
+    },
+    "Subscriber": {
+      "title": "Subscriber",
+      "description": "Newsletter subscriber for discount vouchers",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Subscriber ID" },
+        "contact": { "type": "string", "description": "Phone number or email address", "maxLength": 120 },
+        "source": { "type": "string", "description": "Subscription source", "maxLength": 50 },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Subscription timestamp" }
+      },
+      "required": ["contact"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Store product catalog item",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique product ID" },
+        "name": { "type": "string", "description": "Product name", "maxLength": 150 },
+        "brand": { "type": "string", "description": "Brand name", "maxLength": 80 },
+        "category": { "type": "string", "description": "Category slug", "maxLength": 50 },
+        "categoryLabel": { "type": "string", "description": "Category display label", "maxLength": 80 },
+        "price": { "type": "number", "description": "Selling price in BDT" },
+        "originalPrice": { "type": "number", "description": "Original crossed-out price in BDT" },
+        "image": { "type": "string", "description": "Main product image URL" },
+        "inStock": { "type": "boolean", "description": "Availability status" },
+        "stockCount": { "type": "number", "description": "Stock units in inventory" },
+        "description": { "type": "string", "description": "Product description", "maxLength": 1500 },
+        "rating": { "type": "number", "description": "Average review rating" },
+        "reviewsCount": { "type": "number", "description": "Total review count" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "category", "price", "image"]
+    }
+  },
+  "firestore": {
+    "/products/{productId}": {
+      "schema": { "$ref": "#/entities/Product" },
+      "description": "Store products catalog items"
+    },
+    "/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/Order" },
+      "description": "Collection of all placed orders in Favourite Mart BD"
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User profile documents keyed by Auth UID"
+    },
+    "/reviews/{reviewId}": {
+      "schema": { "$ref": "#/entities/Review" },
+      "description": "Product customer feedback reviews"
+    },
+    "/subscribers/{subscriberId}": {
+      "schema": { "$ref": "#/entities/Subscriber" },
+      "description": "Newsletter and voucher subscribers"
+    }
+  }
+}
